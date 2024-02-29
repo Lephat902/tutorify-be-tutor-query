@@ -1,5 +1,5 @@
 import { DataSource, Repository, SelectQueryBuilder } from 'typeorm';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Tutor } from './entities';
 import { TutorQueryDto } from './dtos';
 
@@ -7,6 +7,18 @@ import { TutorQueryDto } from './dtos';
 export class TutorRepository extends Repository<Tutor> {
     constructor(private dataSource: DataSource) {
         super(Tutor, dataSource.createEntityManager());
+    }
+
+    async updateTutorById(id: string, updatedFields: Partial<Tutor>): Promise<Tutor> {
+        const tutor = await this.findOneBy({ id });
+
+        if (!tutor) {
+            throw new NotFoundException(`Tutor with id ${id} not found`);
+        }
+
+        Object.assign(tutor, updatedFields);
+
+        return this.save(tutor);
     }
 
     async findByFieldsWithFilters(fields: Record<string, any>, filters?: TutorQueryDto): Promise<Tutor[]> {

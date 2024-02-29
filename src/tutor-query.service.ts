@@ -80,6 +80,10 @@ export class TutorQueryService {
     await this.classCategoryRepository.save(newClassCategory);
   }
 
+  async updateTutor(id: string, updatedFields: Partial<Tutor>) {
+    return this.tutorRepository.updateTutorById(id, updatedFields);
+  }
+
   async getTutors(filters: TutorQueryDto) {
     return this.tutorRepository.findByFieldsWithFilters({}, filters);
   }

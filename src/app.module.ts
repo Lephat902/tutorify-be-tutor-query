@@ -2,7 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TutorQueryService } from './tutor-query.service';
-import { TutorQueryController } from './tutor-query.controller';
+import { TutorQueryController, TutorQueryEventHandlerController } from './controllers';
 import { TutorRepository } from './tutor.repository';
 import { entities } from './entities';
 import { ClientsModule, Transport } from '@nestjs/microservices';
@@ -46,6 +46,9 @@ import { QueueNames } from '@tutorify/shared';
     TutorQueryService,
     TutorRepository,
   ],
-  controllers: [TutorQueryController],
+  controllers: [
+    TutorQueryController,
+    TutorQueryEventHandlerController,
+  ],
 })
 export class AppModule { }
