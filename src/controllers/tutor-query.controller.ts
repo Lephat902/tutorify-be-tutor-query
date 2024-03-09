@@ -9,8 +9,8 @@ export class TutorQueryController {
         private readonly tutorQueryService: TutorQueryService,
     ) { }
 
-    @MessagePattern({ cmd: 'getTutors'})
-    async getTutors(filters: TutorQueryDto) {
-        return this.tutorQueryService.getTutors(filters);
+    @MessagePattern({ cmd: 'getTutorsAndTotalCount'})
+    async getTutorsAndTotalCount(filters: TutorQueryDto) {
+        return this.tutorQueryService.getTutorsAndTotalCount(filters);
     }
 }

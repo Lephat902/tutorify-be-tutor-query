@@ -21,7 +21,14 @@ export class TutorRepository extends Repository<Tutor> {
         return this.save(tutor);
     }
 
-    async findByFieldsWithFilters(fields: Record<string, any>, filters?: TutorQueryDto): Promise<Tutor[]> {
+    async findByFieldsWithFilters(
+        fields: Record<string, any>,
+        filters?: TutorQueryDto,
+        includeTotalCount: boolean = true
+    ): Promise<Tutor[] | {
+        results: Tutor[],
+        totalCount: number,
+    }> {
         let classQuery = this.createQueryBuilderWithEagerLoading();
 
         // Filter by fields if provided
@@ -34,7 +41,14 @@ export class TutorRepository extends Repository<Tutor> {
             classQuery = this.applyAdditionalFilters(classQuery, filters);
         }
 
-        return classQuery.getMany();
+        const results = await classQuery.getMany();
+        if (includeTotalCount) {
+            // Execute count query to get total count
+            const totalCount = await classQuery.getCount();
+            return { results, totalCount };
+        } else {
+            return results;
+        }
     }
 
     private createQueryBuilderWithEagerLoading(): SelectQueryBuilder<Tutor> {

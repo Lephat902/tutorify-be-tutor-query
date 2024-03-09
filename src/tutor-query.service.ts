@@ -72,7 +72,7 @@ export class TutorQueryService {
     return this.tutorRepository.updateTutorById(id, updatedFields);
   }
 
-  async getTutors(filters: TutorQueryDto) {
+  async getTutorsAndTotalCount(filters: TutorQueryDto) {
     return this.tutorRepository.findByFieldsWithFilters({}, filters);
   }
 }
