@@ -62,7 +62,7 @@ export class TutorRepository extends Repository<Tutor> {
         }
         if (filters.q) {
             const qParam = `%${filters.q}%`;
-            query = query.andWhere('(tutor.biography ILIKE :q OR tutor.firstname ILIKE :q OR tutor.lastname ILIKE :q OR tutor.username ILIKE :q)', { q: qParam });
+            query = query.andWhere('(tutor.biography ILIKE :q OR tutor.firstName ILIKE :q OR tutor.lastName ILIKE :q OR tutor.username ILIKE :q)', { q: qParam });
         }
         if (filters.gender) {
             query = query.andWhere('tutor.gender = :gender', { gender: filters.gender });

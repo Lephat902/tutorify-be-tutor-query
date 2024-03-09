@@ -86,8 +86,8 @@ export class TutorQueryEventHandlerController {
 
     @EventPattern(new ClassCategoryCreatedEventPattern())
     async handleClassCategoryCreated(payload: ClassCategoryCreatedEventPayload) {
-        const { classCategoryId, levelId, subjectId } = payload;
+        const { classCategoryId, level, subject } = payload;
         console.log('Start inserting new class category to tutor-query database')
-        await this.tutorQueryService.handleClassCategoryCreated(classCategoryId, levelId, subjectId);
+        await this.tutorQueryService.handleClassCategoryCreated(classCategoryId, level, subject);
     }
 }

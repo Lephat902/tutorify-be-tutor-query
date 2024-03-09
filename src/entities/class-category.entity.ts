@@ -8,9 +8,9 @@ export class ClassCategory {
   @PrimaryColumn()
   id: string;
 
-  @ManyToOne(() => Subject, subject => subject.classCategories, { nullable: false, eager: true })
+  @ManyToOne(() => Subject, subject => subject.classCategories, { nullable: false, eager: true, cascade: true })
   subject: Subject;
 
-  @ManyToOne(() => Level, level => level.classCategories, { nullable: false, eager: true })
+  @ManyToOne(() => Level, level => level.classCategories, { nullable: false, eager: true, cascade: true })
   level: Level;
 }

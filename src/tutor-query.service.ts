@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ClassCategory, Level, Subject, Tutor } from './entities';
+import { ClassCategory, Tutor } from './entities';
 import { Repository } from 'typeorm';
-import { QueueNames } from '@tutorify/shared';
+import { LevelDto, QueueNames, SubjectDto } from '@tutorify/shared';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { TutorQueryDto } from './dtos';
@@ -14,10 +14,6 @@ export class TutorQueryService {
     private readonly tutorRepository: TutorRepository,
     @InjectRepository(ClassCategory)
     private readonly classCategoryRepository: Repository<ClassCategory>,
-    @InjectRepository(Level)
-    private readonly levelRepository: Repository<Level>,
-    @InjectRepository(Subject)
-    private readonly subjectRepository: Repository<Subject>,
     @Inject(QueueNames.AUTH)
     private readonly client: ClientProxy,
   ) { }
@@ -60,20 +56,12 @@ export class TutorQueryService {
     await this.tutorRepository.save(tutor);
   }
 
-  async handleClassCategoryCreated(classCategoryId: string, levelId: string, subjectId: string) {
-    const level = await this.findOrCreateEntity({
-      id: levelId,
-    } as Level, this.levelRepository);
-
-    const subject = await this.findOrCreateEntity({
-      id: subjectId,
-    } as Subject, this.subjectRepository);
-
+  async handleClassCategoryCreated(classCategoryId: string, level: LevelDto, subject: SubjectDto) {
     // Create a new ClassCategory instance
     const newClassCategory = this.classCategoryRepository.create({
       id: classCategoryId,
-      subject,
       level,
+      subject,
     });
 
     // Save the new ClassCategory to the database
@@ -86,16 +74,5 @@ export class TutorQueryService {
 
   async getTutors(filters: TutorQueryDto) {
     return this.tutorRepository.findByFieldsWithFilters({}, filters);
-  }
-
-  private async findOrCreateEntity(
-    entity: Level | Subject,
-    entityRepository: Repository<Level> | Repository<Subject>
-  ): Promise<Level | Subject> {
-    const existingEntity = await entityRepository.findOne({ where: { id: entity.id } });
-    if (existingEntity) {
-      return existingEntity;
-    }
-    return entityRepository.save(entity);
   }
 }
