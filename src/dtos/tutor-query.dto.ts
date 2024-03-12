@@ -1,6 +1,10 @@
-import { PaginationDto, SortingDirectionDto, applyMixins, TutorOrderBy, Gender } from "@tutorify/shared";
+import { IntersectionType } from "@nestjs/mapped-types";
+import { PaginationDto, SortingDirectionDto, TutorOrderBy, Gender } from "@tutorify/shared";
 
-class TutorQueryDto {
+export class TutorQueryDto extends IntersectionType(
+    PaginationDto,
+    SortingDirectionDto,
+) {
     readonly q?: string;
     readonly gender?: Gender;
     readonly includeEmailNotVerified?: boolean;
@@ -11,9 +15,6 @@ class TutorQueryDto {
     readonly classCategoryIds?: string[];
     readonly levelIds?: string[];
     readonly subjectIds?: string[];
+    readonly minWage?: number;
+    readonly maxWage?: number;
 }
-
-interface TutorQueryDto extends PaginationDto, SortingDirectionDto { }
-applyMixins(TutorQueryDto, [PaginationDto, SortingDirectionDto]);
-
-export { TutorQueryDto };

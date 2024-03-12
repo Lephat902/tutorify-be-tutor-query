@@ -18,8 +18,8 @@ export class Tutor extends User {
   @Column({ nullable: true })
   approvedAt: Date;
 
-  @Column()
-  minimumWage: string;
+  @Column({ default: 0 })
+  minimumWage: number;
 
   @Column()
   currentWorkplace: string;

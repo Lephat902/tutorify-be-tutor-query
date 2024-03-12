@@ -66,13 +66,19 @@ export class TutorRepository extends Repository<Tutor> {
             query = query.skip((filters.page - 1) * filters.limit).take(filters.limit);
         }
         if (filters.classCategoryIds && filters.classCategoryIds.length > 0) {
-            query = query.andWhere('proficiencies.id IN (:...classCategoryIds)', { classCategoryIds: filters.classCategoryIds });
+            query = query
+                .leftJoin('tutor.proficiencies', 'filteredProficiencies')
+                .andWhere('filteredProficiencies.id IN (:...classCategoryIds)', { classCategoryIds: filters.classCategoryIds });
         }
         if (filters.subjectIds && filters.subjectIds.length > 0) {
-            query = query.andWhere('subject.id IN (:...subjectIds)', { subjectIds: filters.subjectIds });
+            query = query
+                .leftJoin('tutor.proficiencies', 'filteredProficiencies')
+                .andWhere('filteredProficiencies.subject.id IN (:...subjectIds)', { subjectIds: filters.subjectIds });
         }
         if (filters.levelIds && filters.levelIds.length > 0) {
-            query = query.andWhere('level.id IN (:...levelIds)', { levelIds: filters.levelIds });
+            query = query
+                .leftJoin('tutor.proficiencies', 'filteredProficiencies')
+                .andWhere('filteredProficiencies.level.id IN (:...levelIds)', { levelIds: filters.levelIds });
         }
         if (filters.q) {
             const qParam = `%${filters.q}%`;
@@ -89,6 +95,12 @@ export class TutorRepository extends Repository<Tutor> {
         }
         if (!filters.includeNotApproved) {
             query = query.andWhere('tutor.isApproved = :isApproved', { isApproved: true });
+        }
+        if (filters.minWage !== undefined) {
+            query = query.andWhere('tutor.minimumWage >= :minWage', { minWage: filters.minWage });
+        }
+        if (filters.maxWage !== undefined) {
+            query = query.andWhere('tutor.minimumWage <= :maxWage', { maxWage: filters.maxWage });
         }
 
         return query;
