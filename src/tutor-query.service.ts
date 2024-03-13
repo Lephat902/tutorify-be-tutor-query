@@ -75,4 +75,8 @@ export class TutorQueryService {
   async getTutorsAndTotalCount(filters: TutorQueryDto) {
     return this.tutorRepository.findByFieldsWithFilters({}, filters);
   }
+
+  async getTutorById(id: string) {
+    return this.tutorRepository.getFullTutorById(id);
+  }
 }

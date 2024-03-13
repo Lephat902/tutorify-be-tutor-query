@@ -13,4 +13,9 @@ export class TutorQueryController {
     async getTutorsAndTotalCount(filters: TutorQueryDto) {
         return this.tutorQueryService.getTutorsAndTotalCount(filters);
     }
+
+    @MessagePattern({ cmd: 'getTutorById'})
+    async getTutorById(id: string) {
+        return this.tutorQueryService.getTutorById(id);
+    }
 }

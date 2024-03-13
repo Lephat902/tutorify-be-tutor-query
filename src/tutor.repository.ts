@@ -9,6 +9,12 @@ export class TutorRepository extends Repository<Tutor> {
         super(Tutor, dataSource.createEntityManager());
     }
 
+    async getFullTutorById(id: string) {
+        let query = this.createQueryBuilderWithEagerLoading();
+        query = query.andWhere('tutor.id = :id', { id });
+        return query.getOne();
+    }
+
     async updateTutorById(id: string, updatedFields: Partial<Tutor>): Promise<Tutor> {
         const tutor = await this.findOneBy({ id });
 
