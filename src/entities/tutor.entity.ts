@@ -1,12 +1,12 @@
-import { Entity, Column, ManyToMany, JoinTable } from 'typeorm';
-import { User } from './user.entity.abstract';
-import { ClassCategory } from './class-category.entity';
-import { FileObject } from './file-object.entity';
+import { Entity, Column, ManyToMany, JoinTable } from "typeorm";
+import { User } from "./user.entity.abstract";
+import { ClassCategory } from "./class-category.entity";
+import { FileObject } from "./file-object.entity";
 
 @Entity()
 export class Tutor extends User {
   @ManyToMany(() => ClassCategory)
-  @JoinTable({ name: 'tutor_proficient_in_class_category' })
+  @JoinTable({ name: "tutor_proficient_in_class_category" })
   proficiencies: ClassCategory[];
 
   @Column()
@@ -33,6 +33,16 @@ export class Tutor extends User {
   @Column({ nullable: true })
   graduationYear: number;
 
-  @Column({ type: 'jsonb' })
+  @Column({ type: "jsonb" })
   tutorPortfolios: FileObject[];
+
+  @Column({
+    default: 0,
+  })
+  feedbackCount: number;
+
+  @Column({
+    default: 0,
+  })
+  totalFeedbackRating: number;
 }
