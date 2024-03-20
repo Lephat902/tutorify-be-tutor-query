@@ -18,7 +18,7 @@ export class TutorQueryService {
     private readonly client: ClientProxy
   ) {}
 
-  async handleTutorCreated(tutorId: string) {
+  async handleTutorCreatedOrUpdated(tutorId: string) {
     // Event payload contains just a small amount of data
     // So that it's neccessary to fetch the full data from auth service
     const fullTutorData = await firstValueFrom(

@@ -20,6 +20,8 @@ import {
   UserRole,
   FeedbackCreatedEventPattern,
   FeedbackCreatedEventPayload,
+  UserUpdatedEventPattern,
+  UserUpdatedEventPayload,
 } from "@tutorify/shared";
 import { TutorQueryService } from "../tutor-query.service";
 
@@ -38,7 +40,21 @@ export class TutorQueryEventHandlerController {
     }
     console.log("Start inserting new tutor to tutor-query database");
 
-    await this.tutorQueryService.handleTutorCreated(userId);
+    await this.tutorQueryService.handleTutorCreatedOrUpdated(userId);
+  }
+
+  @EventPattern(new UserUpdatedEventPattern())
+  async handleUserUpdated(payload: UserUpdatedEventPayload) {
+    const { userId, role } = payload;
+    if (role !== UserRole.TUTOR) {
+      console.log(
+        "Tutor query service doesn't care if there is any user with other roles updated!"
+      );
+      return;
+    }
+    console.log("Start updating tutor in tutor-query database");
+
+    await this.tutorQueryService.handleTutorCreatedOrUpdated(userId);
   }
 
   @EventPattern(new TutorApprovedEventPattern())
