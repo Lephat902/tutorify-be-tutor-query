@@ -22,6 +22,9 @@ import {
   FeedbackCreatedEventPayload,
   UserUpdatedEventPattern,
   UserUpdatedEventPayload,
+  ClassApplicationUpdatedEventPattern,
+  ClassApplicationUpdatedEventPayload,
+  ApplicationStatus,
 } from "@tutorify/shared";
 import { TutorQueryService } from "../tutor-query.service";
 
@@ -133,4 +136,15 @@ export class TutorQueryEventHandlerController {
     );
     await this.tutorQueryService.handleFeedbackCreated(tutorId, rate);
   }
+
+  @EventPattern(new ClassApplicationUpdatedEventPattern())
+  async handleClassApplicationUpdated(payload: ClassApplicationUpdatedEventPayload) {
+    const { tutorId, newStatus } = payload;
+    if (newStatus !== ApplicationStatus.APPROVED) {
+      console.log(`Not interested in ${newStatus} status of the application`);
+      return;
+    }
+    console.log("Start increase numberOfClasses to tutor-query database");
+    await this.tutorQueryService.handleClassApplicationUpdated(tutorId);
+  } 
 }

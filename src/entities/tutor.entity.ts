@@ -36,6 +36,12 @@ export class Tutor extends User {
   @Column({ type: "jsonb" })
   tutorPortfolios: FileObject[];
 
+  @Column({ type: "text", array: true, default: [] })
+  socialProfiles: string[];
+
+  @Column({ default: 0 })
+  numOfClasses: number;
+
   @Column({
     default: 0,
   })

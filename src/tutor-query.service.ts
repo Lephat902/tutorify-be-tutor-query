@@ -99,4 +99,10 @@ export class TutorQueryService {
       totalFeedbackRating: () => "totalFeedbackRating + " + rate,
     });
   }
+
+  async handleClassApplicationUpdated(tutorId: string) {
+    this.tutorRepository.update(tutorId, {
+      numOfClasses: () => "numOfClasses + 1",
+    });
+  }
 }
