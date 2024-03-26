@@ -40,6 +40,20 @@ import { QueueNames } from '@tutorify/shared';
           },
         }),
       },
+      {
+        name: QueueNames.USER_PREFERENCES,
+        inject: [ConfigService],
+        useFactory: async (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [configService.get<string>('RABBITMQ_URI')],
+            queue: QueueNames.USER_PREFERENCES,
+            queueOptions: {
+              durable: false,
+            },
+          },
+        }),
+      },
     ]),
   ],
   providers: [
