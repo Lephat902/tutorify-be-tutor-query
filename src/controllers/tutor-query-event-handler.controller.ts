@@ -5,10 +5,6 @@ import {
   ClassCategoryCreatedEventPayload,
   TutorApprovedEventPattern,
   TutorApprovedEventPayload,
-  TutorProficiencyCreatedEventPattern,
-  TutorProficiencyCreatedEventPayload,
-  TutorProficiencyDeletedEventPattern,
-  TutorProficiencyDeletedEventPayload,
   UserBlockedEventPattern,
   UserBlockedEventPayload,
   UserCreatedEventPattern,
@@ -25,39 +21,29 @@ import {
   ClassApplicationUpdatedEventPattern,
   ClassApplicationUpdatedEventPayload,
   ApplicationStatus,
+  ClassCategoriesPreferenceCreatedEventPattern,
+  ClassCategoriesPreferenceCreatedEventPayload,
+  ClassCategoriesPreferenceDeletedEventPayload,
+  ClassCategoriesPreferenceDeletedEventPattern,
 } from "@tutorify/shared";
 import { TutorQueryService } from "../tutor-query.service";
+import { MutexService } from "src/mutexes";
 
 @Controller()
 export class TutorQueryEventHandlerController {
-  constructor(private readonly tutorQueryService: TutorQueryService) {}
+  constructor(
+    private readonly tutorQueryService: TutorQueryService,
+    private readonly mutexService: MutexService,
+  ) { }
 
   @EventPattern(new UserCreatedEventPattern())
   async handleUserCreated(payload: UserCreatedEventPayload) {
-    const { userId, role } = payload;
-    if (role !== UserRole.TUTOR) {
-      console.log(
-        "Tutor query service doesn't care if there is any user with other roles created!"
-      );
-      return;
-    }
-    console.log("Start inserting new tutor to tutor-query database");
-
-    await this.tutorQueryService.handleTutorCreatedOrUpdated(userId);
+    await this.handleUserCreateOrUpdated(payload);
   }
 
   @EventPattern(new UserUpdatedEventPattern())
   async handleUserUpdated(payload: UserUpdatedEventPayload) {
-    const { userId, role } = payload;
-    if (role !== UserRole.TUTOR) {
-      console.log(
-        "Tutor query service doesn't care if there is any user with other roles updated!"
-      );
-      return;
-    }
-    console.log("Start updating tutor in tutor-query database");
-
-    await this.tutorQueryService.handleTutorCreatedOrUpdated(userId);
+    await this.handleUserCreateOrUpdated(payload);
   }
 
   @EventPattern(new TutorApprovedEventPattern())
@@ -77,44 +63,32 @@ export class TutorQueryEventHandlerController {
 
   @EventPattern(new UserBlockedEventPattern())
   async handleUserBlocked(payload: UserBlockedEventPayload) {
-    console.log("Start updating tutor to tutor-query database");
     const { userId } = payload;
-    // no need to check userRole, user with role other than TUTOR not exist in the DB
-    await this.tutorQueryService.updateTutor(userId, { isBlocked: true });
+    // Lock the mutex
+    const release = await this.mutexService.acquireLockForClassSession(userId);
+    try {
+      console.log("Start updating tutor to tutor-query database");
+      // no need to check userRole, user with role other than TUTOR not exist in the DB
+      await this.tutorQueryService.updateTutor(userId, { isBlocked: true });
+    } finally {
+      // Release the mutex
+      release();
+    }
   }
 
   @EventPattern(new UserUnblockedEventPattern())
   async handleUserUnblocked(payload: UserUnblockedEventPayload) {
-    console.log("Start updating tutor to tutor-query database");
     const { userId } = payload;
-    // no need to check userRole, user with role other than TUTOR not exist in the DB
-    await this.tutorQueryService.updateTutor(userId, { isBlocked: false });
-  }
-
-  @EventPattern(new TutorProficiencyCreatedEventPattern())
-  async handleTutorProficiencyCreated(
-    payload: TutorProficiencyCreatedEventPayload
-  ) {
-    const { tutorId, classCategoryId } = payload;
-    console.log(
-      "Start inserting new tutor proficiency to tutor-query database"
-    );
-    await this.tutorQueryService.handleTutorProficiencyCreated(
-      tutorId,
-      classCategoryId
-    );
-  }
-
-  @EventPattern(new TutorProficiencyDeletedEventPattern())
-  async handleTutorProficiencyDeleted(
-    payload: TutorProficiencyDeletedEventPayload
-  ) {
-    const { tutorId, classCategoryId } = payload;
-    console.log("Start removing new tutor proficiency to tutor-query database");
-    await this.tutorQueryService.handleTutorProficiencyDeleted(
-      tutorId,
-      classCategoryId
-    );
+    // Lock the mutex
+    const release = await this.mutexService.acquireLockForClassSession(userId);
+    try {
+      console.log("Start updating tutor to tutor-query database");
+      // no need to check userRole, user with role other than TUTOR not exist in the DB
+      await this.tutorQueryService.updateTutor(userId, { isBlocked: false });
+    } finally {
+      // Release the mutex
+      release();
+    }
   }
 
   @EventPattern(new ClassCategoryCreatedEventPattern())
@@ -131,10 +105,17 @@ export class TutorQueryEventHandlerController {
   @EventPattern(new FeedbackCreatedEventPattern())
   async handleFeedbackCreated(payload: FeedbackCreatedEventPayload) {
     const { tutorId, rate } = payload;
-    console.log(
-      "Start increase rate and total feedbacks to tutor-query database"
-    );
-    await this.tutorQueryService.handleFeedbackCreated(tutorId, rate);
+    // Lock the mutex
+    const release = await this.mutexService.acquireLockForClassSession(tutorId);
+    try {
+      console.log(
+        "Start increase rate and total feedbacks to tutor-query database"
+      );
+      await this.tutorQueryService.handleFeedbackCreated(tutorId, rate);
+    } finally {
+      // Release the mutex
+      release();
+    }
   }
 
   @EventPattern(new ClassApplicationUpdatedEventPattern())
@@ -144,7 +125,62 @@ export class TutorQueryEventHandlerController {
       console.log(`Not interested in ${newStatus} status of the application`);
       return;
     }
-    console.log("Start increase numberOfClasses to tutor-query database");
-    await this.tutorQueryService.handleClassApplicationUpdated(tutorId);
-  } 
+    // Lock the mutex
+    const release = await this.mutexService.acquireLockForClassSession(tutorId);
+    try {
+      console.log("Start increase numberOfClasses to tutor-query database");
+      await this.tutorQueryService.handleClassApplicationUpdated(tutorId);
+    } finally {
+      // Release the mutex
+      release();
+    }
+  }
+
+  @EventPattern(new ClassCategoriesPreferenceCreatedEventPattern())
+  async handleClassCategoriesPreferenceCreated(payload: ClassCategoriesPreferenceCreatedEventPayload) {
+    const { userId, classCategoryIds } = payload;
+    // Lock the mutex
+    const release = await this.mutexService.acquireLockForClassSession(userId);
+    try {
+      console.log("Start adding new tutor proficiencies");
+      return this.tutorQueryService.addTutorProficiencies(userId, classCategoryIds);
+    } finally {
+      // Release the mutex
+      release();
+    }
+  }
+
+  @EventPattern(new ClassCategoriesPreferenceDeletedEventPattern())
+  async handleClassCategoriesPreferenceDeleted(payload: ClassCategoriesPreferenceDeletedEventPayload) {
+    const { userId, classCategoryIds } = payload;
+    // Lock the mutex
+    const release = await this.mutexService.acquireLockForClassSession(userId);
+    try {
+      console.log("Start deleting tutor proficiencies");
+      return this.tutorQueryService.deleteTutorProficiencies(userId, classCategoryIds);
+    } finally {
+      // Release the mutex
+      release();
+    }
+  }
+
+  private async handleUserCreateOrUpdated(payload: UserCreatedEventPayload | UserUpdatedEventPayload) {
+    const { userId, role } = payload;
+    if (role !== UserRole.TUTOR) {
+      console.log(
+        "Tutor query service doesn't care if there is any user with other roles created/updated!"
+      );
+      return;
+    }
+
+    // Lock the mutex
+    const release = await this.mutexService.acquireLockForClassSession(userId);
+    try {
+      console.log("Start creating/updating tutor in tutor-query database");
+      await this.tutorQueryService.handleTutorCreatedOrUpdated(userId);
+    } finally {
+      // Release the mutex
+      release();
+    }
+  }
 }

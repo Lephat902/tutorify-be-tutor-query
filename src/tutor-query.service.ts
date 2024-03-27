@@ -1,4 +1,4 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ClassCategory, Tutor } from "./entities";
 import { Repository } from "typeorm";
@@ -29,9 +29,9 @@ export class TutorQueryService {
     await this.tutorRepository.save(fullTutorData);
   }
 
-  async handleTutorProficiencyCreated(
+  async addTutorProficiencies(
     tutorId: string,
-    classCategoryId: string
+    classCategoryIds: string[]
   ) {
     // Fetch tutor along with proficiencies from database
     const tutor = await this.tutorRepository.findOne({
@@ -39,18 +39,22 @@ export class TutorQueryService {
       relations: { proficiencies: true },
     });
 
-    // Add class category to tutor's proficiencies
-    tutor.proficiencies.push({
-      id: classCategoryId,
-    } as ClassCategory);
+    if (!tutor)
+      throw new NotFoundException(`This user may not be a tutor`);
 
-    // Save updated tutor
+    const proficiencies = await this.classCategoryRepository.createQueryBuilder('classCategory')
+      .where('classCategory.id IN (:...classCategoryIds)', { classCategoryIds })
+      .getMany();
+
+    tutor.proficiencies.push(...proficiencies);
+    console.log("After adding class categories:", tutor.proficiencies);
+
     await this.tutorRepository.save(tutor);
   }
 
-  async handleTutorProficiencyDeleted(
+  async deleteTutorProficiencies(
     tutorId: string,
-    classCategoryId: string
+    classCategoryIdsToDelete: string[]
   ) {
     // Fetch tutor along with proficiencies from database
     const tutor = await this.tutorRepository.findOne({
@@ -58,12 +62,13 @@ export class TutorQueryService {
       relations: { proficiencies: true },
     });
 
-    // Remove class category from tutor's proficiencies
-    tutor.proficiencies = tutor.proficiencies.filter(
-      (category) => category.id !== classCategoryId
-    );
+    if (!tutor)
+      throw new NotFoundException(`This user may not be a tutor`);
 
-    // Save updated tutor
+    tutor.proficiencies = tutor.proficiencies.filter(proficiency => !classCategoryIdsToDelete.includes(proficiency.id));
+    console.log("What to delete is:", classCategoryIdsToDelete);
+    console.log("After deleting class categories:", tutor.proficiencies);
+
     await this.tutorRepository.save(tutor);
   }
 
