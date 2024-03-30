@@ -2,6 +2,8 @@ import { Entity, Column, ManyToMany, JoinTable } from "typeorm";
 import { User } from "./user.entity.abstract";
 import { ClassCategory } from "./class-category.entity";
 import { FileObject } from "./file-object.entity";
+import { SocialProfile } from "./social-profile.entity";
+import { Type } from "class-transformer";
 
 @Entity()
 export class Tutor extends User {
@@ -36,8 +38,9 @@ export class Tutor extends User {
   @Column({ type: "jsonb" })
   tutorPortfolios: FileObject[];
 
-  @Column({ type: "text", array: true, default: [] })
-  socialProfiles: string[];
+  @Column({ type: "jsonb", nullable: true })
+  @Type(() => SocialProfile)
+  socialProfiles: SocialProfile[];
 
   @Column({ default: 0 })
   numOfClasses: number;
