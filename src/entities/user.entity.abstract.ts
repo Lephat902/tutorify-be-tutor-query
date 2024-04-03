@@ -14,13 +14,13 @@ export abstract class User {
     @Column({ unique: true })
     username: string;
 
-    @Column()
+    @Column({ nullable: true })
     firstName: string;
 
-    @Column()
+    @Column({ nullable: true })
     middleName: string;
 
-    @Column()
+    @Column({ nullable: true })
     lastName: string;
 
     @Column({ type: 'enum', enum: Gender, nullable: true })
@@ -29,10 +29,10 @@ export abstract class User {
     @Column({ type: 'jsonb', nullable: true })
     avatar: FileObject;
 
-    @Column()
+    @Column({ nullable: true })
     emailVerified: boolean;
 
-    @Column()
+    @Column({ nullable: true })
     isBlocked: boolean;
 
     @Column({ nullable: true })

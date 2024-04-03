@@ -11,10 +11,10 @@ export class Tutor extends User {
   @JoinTable({ name: "tutor_proficient_in_class_category" })
   proficiencies: ClassCategory[];
 
-  @Column()
+  @Column({ nullable: true })
   biography: string;
 
-  @Column()
+  @Column({ nullable: true })
   isApproved: boolean;
 
   @Column({ nullable: true })
@@ -23,19 +23,19 @@ export class Tutor extends User {
   @Column({ default: 0 })
   minimumWage: number;
 
-  @Column()
+  @Column({ nullable: true })
   currentWorkplace: string;
 
-  @Column()
+  @Column({ nullable: true })
   currentPosition: string;
 
-  @Column()
+  @Column({ nullable: true })
   major: string;
 
   @Column({ nullable: true })
   graduationYear: number;
 
-  @Column({ type: "jsonb" })
+  @Column({ type: "jsonb", nullable: true })
   tutorPortfolios: FileObject[];
 
   @Column({ type: "jsonb", nullable: true })
