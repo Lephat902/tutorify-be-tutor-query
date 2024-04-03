@@ -1,12 +1,11 @@
-import { Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ClassCategory, Tutor } from "./entities";
 import { Repository } from "typeorm";
-import { LevelDto, QueueNames, SubjectDto } from "@tutorify/shared";
-import { ClientProxy } from "@nestjs/microservices";
-import { firstValueFrom, timeout } from "rxjs";
-import { TutorQueryDto, UserPreferences } from "./dtos";
+import { LevelDto, SubjectDto } from "@tutorify/shared";
+import { TutorQueryDto } from "./dtos";
 import { TutorRepository } from "./tutor.repository";
+import { AuthProxy, UserPreferencesProxy } from "./proxies";
 
 @Injectable()
 export class TutorQueryService {
@@ -14,18 +13,14 @@ export class TutorQueryService {
     private readonly tutorRepository: TutorRepository,
     @InjectRepository(ClassCategory)
     private readonly classCategoryRepository: Repository<ClassCategory>,
-    @Inject(QueueNames.AUTH)
-    private readonly authClient: ClientProxy,
-    @Inject(QueueNames.USER_PREFERENCES)
-    private readonly userPreferencesClient: ClientProxy,
+    private readonly authProxy: AuthProxy,
+    private readonly userPreferencesProxy: UserPreferencesProxy,
   ) { }
 
   async handleTutorCreatedOrUpdated(tutorId: string) {
     // Event payload contains just a small amount of data
     // So that it's neccessary to fetch the full data from auth service
-    const fullTutorData = await firstValueFrom(
-      this.authClient.send<Tutor>({ cmd: "getUserById" }, tutorId)
-    );
+    const fullTutorData = await this.authProxy.getUserById(tutorId);
     await this.tutorRepository.save(fullTutorData);
   }
 
@@ -96,10 +91,8 @@ export class TutorQueryService {
     // If classCategoryIds not specified
     if (!filters.classCategoryIds && filters?.userMakeRequest?.userId) {
       const userPreferencesData =
-        await this.fetchClassCategoryPreferences(filters.userMakeRequest.userId);
-      filters.classCategoryPreferences = {
-        classCategoryIds: userPreferencesData?.preferences?.classCategoryIds
-      };
+        await this.userPreferencesProxy.fetchUserPreferences(filters.userMakeRequest.userId);
+      filters.userPreferences = userPreferencesData?.preferences;
     }
     return this.tutorRepository.getTutorsAndTotalCount(filters);
   }
@@ -119,17 +112,5 @@ export class TutorQueryService {
     await this.tutorRepository.update(tutorId, {
       numOfClasses: () => "numOfClasses + 1",
     });
-  }
-
-  private async fetchClassCategoryPreferences(userId: string): Promise<UserPreferences> {
-    try {
-      return await firstValueFrom(
-        this.userPreferencesClient.send<UserPreferences>({ cmd: 'getUserPreferencesByUserId' }, userId)
-          .pipe(timeout(1000))
-      );
-    } catch (error) {
-      console.error("Error fetching user's category preferences:", error);
-      return await Promise.resolve(null);
-    }
   }
 }

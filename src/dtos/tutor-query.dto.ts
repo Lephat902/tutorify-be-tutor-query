@@ -1,5 +1,5 @@
 import { IntersectionType } from "@nestjs/mapped-types";
-import { PaginationDto, SortingDirectionDto, TutorOrderBy, Gender } from "@tutorify/shared";
+import { PaginationDto, SortingDirectionDto, TutorOrderBy, Gender, StoredLocation } from "@tutorify/shared";
 
 export class TutorQueryDto extends IntersectionType(
     PaginationDto,
@@ -18,8 +18,9 @@ export class TutorQueryDto extends IntersectionType(
     readonly minWage: number;
     readonly maxWage: number;
     readonly userMakeRequest: UserMakeRequest;
-    classCategoryPreferences: {
+    userPreferences: {
         classCategoryIds: string[];
+        location: StoredLocation;
     };
 }
 

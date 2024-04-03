@@ -8,6 +8,7 @@ import { entities } from './entities';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { QueueNames } from '@tutorify/shared';
 import { MutexService } from './mutexes';
+import { Proxies } from './proxies';
 
 @Global()
 @Module({
@@ -61,6 +62,7 @@ import { MutexService } from './mutexes';
     TutorQueryService,
     TutorRepository,
     MutexService,
+    ...Proxies,
   ],
   controllers: [
     TutorQueryController,

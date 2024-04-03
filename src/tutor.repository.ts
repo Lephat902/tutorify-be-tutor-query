@@ -2,7 +2,7 @@ import { Brackets, DataSource, Repository, SelectQueryBuilder } from 'typeorm';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Tutor } from './entities';
 import { TutorQueryDto } from './dtos';
-import { Gender, TutorOrderBy } from '@tutorify/shared';
+import { Gender, StoredLocation, TutorOrderBy } from '@tutorify/shared';
 
 @Injectable()
 export class TutorRepository extends Repository<Tutor> {
@@ -37,16 +37,18 @@ export class TutorRepository extends Repository<Tutor> {
         const tutorQuery = this.createQueryBuilderWithEagerLoading();
 
         // Apply filters to query 
-        // classCategoryIds takes precedence over classCategoryPreferences.classCategoryIds
+        // Location has higher priority than class category
+        this.orderByLocationPriority(tutorQuery, filters?.userPreferences?.location);
+        // classCategoryIds takes precedence over userPreferences.classCategoryIds
         if (filters?.classCategoryIds) {
             this.filterByCategoryIds(tutorQuery, filters.classCategoryIds);
-        } else if (filters?.classCategoryPreferences?.classCategoryIds) {
-            this.orderByCategoryPriority(tutorQuery, filters.classCategoryPreferences.classCategoryIds)
+        } else if (filters?.userPreferences?.classCategoryIds) {
+            this.orderByCategoryPriority(tutorQuery, filters.userPreferences.classCategoryIds)
         }
         this.filterBySubjectIds(tutorQuery, filters?.subjectIds);
         this.filterByLevelIds(tutorQuery, filters?.levelIds);
         this.filterBySearchQuery(tutorQuery, filters.q);
-        // If this specified, it will overwrite the order specified by classCategoryPreferences.classCategoryIds
+        // If this specified, it will overwrite the order specified by userPreferences.classCategoryIds
         this.orderByField(tutorQuery, filters.order, filters.dir);
         this.paginateResults(tutorQuery, filters.page, filters.limit);
         this.filterByGender(tutorQuery, filters.gender);
@@ -87,7 +89,23 @@ export class TutorRepository extends Repository<Tutor> {
                         ELSE 1
                     END)`, "priority")
                 .setParameter("classCategoryIds", classCategoryIds)
-                .orderBy("priority", "ASC", "NULLS LAST");
+                .addOrderBy("priority", "ASC", "NULLS LAST");
+        }
+    }
+
+    // Make classes that are nearest to the top of the result, others at last
+    private orderByLocationPriority(query: SelectQueryBuilder<Tutor>, location: StoredLocation) {
+        if (location) {
+            const longitude = location.coordinates[0];
+            const latitude = location.coordinates[1];
+
+            query
+                .addSelect(`
+                    ST_DistanceSphere(
+                        ST_GeomFromGeoJSON('{"type":"Point","coordinates":[${longitude},${latitude}]}'),
+                        tutor.location
+                    )`, 'distance')
+                .addOrderBy('distance', 'ASC', 'NULLS LAST');
         }
     }
 
