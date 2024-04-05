@@ -25,6 +25,8 @@ import {
   ClassCategoriesPreferenceCreatedEventPayload,
   ClassCategoriesPreferenceDeletedEventPayload,
   ClassCategoriesPreferenceDeletedEventPattern,
+  UserDeletedEventPattern,
+  UserDeletedEventPayload,
 } from "@tutorify/shared";
 import { TutorQueryService } from "../tutor-query.service";
 import { MutexService } from "src/mutexes";
@@ -44,6 +46,12 @@ export class TutorQueryEventHandlerController {
   @EventPattern(new UserUpdatedEventPattern())
   async handleUserUpdated(payload: UserUpdatedEventPayload) {
     await this.handleUserCreateOrUpdated(payload);
+  }
+
+  @EventPattern(new UserDeletedEventPattern())
+  async handleUserDeleted(payload: UserDeletedEventPayload) {
+    const { userId } = payload;
+    await this.tutorQueryService.handleTutorDeleted(userId);
   }
 
   @EventPattern(new TutorApprovedEventPattern())

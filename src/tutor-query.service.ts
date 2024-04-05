@@ -24,6 +24,24 @@ export class TutorQueryService {
     await this.tutorRepository.save(fullTutorData);
   }
 
+  async handleTutorDeleted(tutorId: string) {
+    const tutor = await this.tutorRepository.findOne({
+      where: { id: tutorId },
+      relations: ["proficiencies"]
+    });
+
+    if (!tutor) {
+      throw new Error("Tutor not found");
+    }
+
+    // Remove the relations
+    tutor.proficiencies = [];
+    await this.tutorRepository.save(tutor);
+
+    // Delete the tutor
+    await this.tutorRepository.remove(tutor);
+  }
+
   async addTutorProficiencies(
     tutorId: string,
     classCategoryIds: string[]
