@@ -35,10 +35,13 @@ export class TutorRepository extends Repository<Tutor> {
         totalCount: number,
     }> {
         const tutorQuery = this.createQueryBuilderWithEagerLoading();
+        console.log(filters);
 
         // Apply filters to query 
         // Location has higher priority than class category
-        this.orderByLocationPriority(tutorQuery, filters?.userPreferences?.location);
+        const locationToOrder = filters.location || filters?.userPreferences?.location;
+        if (locationToOrder)
+            this.orderByLocationPriority(tutorQuery, locationToOrder);
         // classCategoryIds takes precedence over userPreferences.classCategoryIds
         if (filters?.classCategoryIds) {
             this.filterByCategoryIds(tutorQuery, filters.classCategoryIds);

@@ -22,6 +22,11 @@ export class TutorQueryDto extends IntersectionType(
         classCategoryIds: string[];
         location: StoredLocation;
     };
+    readonly wardId: string;
+    readonly districtId: string;
+    readonly provinceId: string;
+    // Not user's input
+    location: StoredLocation;
 }
 
 interface UserMakeRequest {

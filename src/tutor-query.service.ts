@@ -2,10 +2,16 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ClassCategory, Tutor } from "./entities";
 import { Repository } from "typeorm";
-import { LevelDto, SubjectDto } from "@tutorify/shared";
+import {
+  AddressProxy,
+  AuthProxy,
+  GeocodeResponseDto,
+  LevelDto,
+  SubjectDto,
+  UserPreferencesProxy
+} from "@tutorify/shared";
 import { TutorQueryDto } from "./dtos";
 import { TutorRepository } from "./tutor.repository";
-import { AuthProxy, UserPreferencesProxy } from "./proxies";
 
 @Injectable()
 export class TutorQueryService {
@@ -15,6 +21,7 @@ export class TutorQueryService {
     private readonly classCategoryRepository: Repository<ClassCategory>,
     private readonly authProxy: AuthProxy,
     private readonly userPreferencesProxy: UserPreferencesProxy,
+    private readonly addressProxy: AddressProxy,
   ) { }
 
   async handleTutorCreatedOrUpdated(tutorId: string) {
@@ -106,12 +113,10 @@ export class TutorQueryService {
   }
 
   async getTutorsAndTotalCount(filters: TutorQueryDto) {
-    // If classCategoryIds not specified
-    if (!filters.classCategoryIds && filters?.userMakeRequest?.userId) {
-      const userPreferencesData =
-        await this.userPreferencesProxy.fetchUserPreferences(filters.userMakeRequest.userId);
-      filters.userPreferences = userPreferencesData?.preferences;
-    }
+    await Promise.allSettled([
+      this.setUserPreferences(filters),
+      this.setLocation(filters),
+    ]);
     return this.tutorRepository.getTutorsAndTotalCount(filters);
   }
 
@@ -130,5 +135,32 @@ export class TutorQueryService {
     await this.tutorRepository.update(tutorId, {
       numOfClasses: () => "numOfClasses + 1",
     });
+  }
+
+  private async setUserPreferences(filters: TutorQueryDto) {
+    // If classCategoryIds not specified
+    if (!filters.classCategoryIds && filters?.userMakeRequest?.userId) {
+      const userPreferencesData =
+        await this.userPreferencesProxy.getUserPreferencesByUserId(filters.userMakeRequest.userId, 1000);
+      filters.userPreferences = userPreferencesData?.preferences;
+    }
+  }
+
+  private async setLocation(filters: TutorQueryDto) {
+    let res: GeocodeResponseDto;
+    if (filters?.wardId) {
+      res = await this.addressProxy.getGeocodeFromWardId(filters.wardId);
+    } else if (filters?.districtId) {
+      res = await this.addressProxy.getGeocodeFromDistrictId(filters.districtId);
+    } else if (filters?.provinceId) {
+      res = await this.addressProxy.getGeocodeFromProvinceId(filters.provinceId);
+    }
+
+    if (res) {
+      filters.location = {
+        type: 'Point',
+        coordinates: [res.lon, res.lat],
+      };
+    }
   }
 }
