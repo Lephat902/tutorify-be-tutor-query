@@ -212,7 +212,7 @@ export class TutorRepository extends Repository<Tutor> {
         }
 
         query
-            .orderBy("bayesian_average", "ASC")
+            .orderBy("bayesian_average", "DESC", 'NULLS LAST')
             .addGroupBy('tutor.id')
             .addGroupBy('proficiencies.id')
             .addGroupBy('subject.id')
