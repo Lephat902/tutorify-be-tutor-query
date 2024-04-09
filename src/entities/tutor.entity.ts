@@ -45,13 +45,9 @@ export class Tutor extends User {
   @Column({ default: 0 })
   numOfClasses: number;
 
-  @Column({
-    default: 0,
-  })
-  feedbackCount: number;
+  @Column({ type: 'real', default: '0' })
+  feedbackCount: string;
 
-  @Column({
-    default: 0,
-  })
-  totalFeedbackRating: number;
+  @Column({ type: 'real', default: '0' })
+  totalFeedbackRating: string;
 }

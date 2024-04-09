@@ -12,6 +12,7 @@ export class TutorQueryDto extends IntersectionType(
     // Tutor
     readonly includeNotApproved: boolean;
     readonly order: TutorOrderBy;
+    readonly showZeroFeedbacksTutorsInRatingSorting: boolean;
     readonly classCategoryIds: string[];
     readonly levelIds: string[];
     readonly subjectIds: string[];

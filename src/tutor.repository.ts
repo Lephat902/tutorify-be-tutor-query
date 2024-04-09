@@ -2,7 +2,7 @@ import { Brackets, DataSource, Repository, SelectQueryBuilder } from 'typeorm';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Tutor } from './entities';
 import { TutorQueryDto } from './dtos';
-import { Gender, StoredLocation, TutorOrderBy } from '@tutorify/shared';
+import { Gender, SortingDirection, StoredLocation, TutorOrderBy } from '@tutorify/shared';
 
 @Injectable()
 export class TutorRepository extends Repository<Tutor> {
@@ -30,7 +30,7 @@ export class TutorRepository extends Repository<Tutor> {
 
     async getTutorsAndTotalCount(
         filters: TutorQueryDto,
-    ): Promise<Tutor[] | {
+    ): Promise<{
         results: Tutor[],
         totalCount: number,
     }> {
@@ -52,7 +52,7 @@ export class TutorRepository extends Repository<Tutor> {
         this.filterByLevelIds(tutorQuery, filters?.levelIds);
         this.filterBySearchQuery(tutorQuery, filters.q);
         // If this specified, it will overwrite the order specified by userPreferences.classCategoryIds
-        this.orderByField(tutorQuery, filters.order, filters.dir);
+        await this.orderByField(tutorQuery, filters.order, filters.dir, filters.showZeroFeedbacksTutorsInRatingSorting);
         this.paginateResults(tutorQuery, filters.page, filters.limit);
         this.filterByGender(tutorQuery, filters.gender);
         this.filterByBlockedStatus(tutorQuery, filters.includeBlocked);
@@ -183,9 +183,75 @@ export class TutorRepository extends Repository<Tutor> {
         }
     }
 
-    private orderByField(query: SelectQueryBuilder<Tutor>, order: TutorOrderBy | undefined, dir: 'ASC' | 'DESC' | undefined) {
-        if (order) {
-            query.orderBy(`tutor.${order}`, dir || 'ASC');
+    private async orderByField(
+        query: SelectQueryBuilder<Tutor>,
+        order: TutorOrderBy | undefined,
+        dir: SortingDirection | undefined,
+        showZeroFeedbacksTutorsInRatingSorting: boolean | undefined,
+    ) {
+        if (!order) return;
+
+        if (order === TutorOrderBy.RATING_STAR) {
+            await this.orderByRatingStar(query, showZeroFeedbacksTutorsInRatingSorting);
+        } else {
+            query.orderBy(`tutor.${order}`, dir || SortingDirection.ASC);
         }
+    }
+
+    private async orderByRatingStar(
+        query: SelectQueryBuilder<Tutor>,
+        showZeroFeedbacksTutorsInRatingSorting: boolean | undefined,
+    ) {
+        const M = process.env.BAYESIAN_AVERAGE_M;
+        const averageRating = await this.calculateAverageRating();
+
+        if (showZeroFeedbacksTutorsInRatingSorting) {
+            this.addBayesianAverageWithZeroFeedbacksTutors(query, M, averageRating);
+        } else {
+            this.addBayesianAverage(query, M, averageRating);
+        }
+
+        query
+            .orderBy("bayesian_average", "ASC")
+            .addGroupBy('tutor.id')
+            .addGroupBy('proficiencies.id')
+            .addGroupBy('subject.id')
+            .addGroupBy('level.id');
+    }
+
+    private async calculateAverageRating() {
+        const { averageRating } = await this.createQueryBuilder('tutor')
+            .select("AVG(tutor.totalFeedbackRating / tutor.feedbackCount)", "averageRating")
+            .where("tutor.feedbackCount > 0")
+            .getRawOne();
+
+        return averageRating;
+    }
+
+    private addBayesianAverage(
+        query: SelectQueryBuilder<Tutor>,
+        M: string,
+        averageRating: number,
+    ) {
+        query.addSelect(`((tutor.feedbackCount / (tutor.feedbackCount + :M)) * (tutor.totalFeedbackRating / tutor.feedbackCount) + (:M / (tutor.feedbackCount + :M)) * :averageRating)`, "bayesian_average")
+            .setParameter("M", M)
+            .setParameter("averageRating", averageRating)
+            .andWhere("tutor.feedbackCount > 0");
+    }
+
+    private addBayesianAverageWithZeroFeedbacksTutors(
+        query: SelectQueryBuilder<Tutor>,
+        M: string,
+        averageRating: number,
+    ) {
+        query.addSelect(subQuery => {
+            return subQuery
+                .select(`((tutor.feedbackCount / (tutor.feedbackCount + :M)) * (tutor.totalFeedbackRating / tutor.feedbackCount) + (:M / (tutor.feedbackCount + :M)) * :averageRating)`)
+                .from(Tutor, "tutor1")
+                .andWhere("tutor1.id = tutor.id")
+                .setParameter("M", M)
+                .setParameter("averageRating", averageRating)
+                .andWhere("tutor.feedbackCount > 0");
+        }, "bayesian_average");
     }
 }
