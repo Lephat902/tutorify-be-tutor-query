@@ -131,6 +131,13 @@ export class TutorQueryService {
     });
   }
 
+  async handleFeedbackDeleted(tutorId: string, rate: number) {
+    await this.tutorRepository.update(tutorId, {
+      feedbackCount: () => "feedbackCount - 1",
+      totalFeedbackRating: () => "totalFeedbackRating - " + rate,
+    });
+  }
+
   async handleClassApplicationUpdated(tutorId: string) {
     await this.tutorRepository.update(tutorId, {
       numOfClasses: () => "numOfClasses + 1",

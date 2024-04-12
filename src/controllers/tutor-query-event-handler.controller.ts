@@ -27,6 +27,8 @@ import {
   ClassCategoriesPreferenceDeletedEventPattern,
   UserDeletedEventPattern,
   UserDeletedEventPayload,
+  FeedbackDeletedEventPattern,
+  FeedbackDeletedEventPayload,
 } from "@tutorify/shared";
 import { TutorQueryService } from "../tutor-query.service";
 import { MutexService } from "src/mutexes";
@@ -120,6 +122,22 @@ export class TutorQueryEventHandlerController {
         "Start increase rate and total feedbacks to tutor-query database"
       );
       await this.tutorQueryService.handleFeedbackCreated(tutorId, rate);
+    } finally {
+      // Release the mutex
+      release();
+    }
+  }
+
+  @EventPattern(new FeedbackDeletedEventPattern())
+  async handleFeedbackDeleted(payload: FeedbackDeletedEventPayload) {
+    const { tutorId, rate } = payload;
+    // Lock the mutex
+    const release = await this.mutexService.acquireLockForClassSession(tutorId);
+    try {
+      console.log(
+        "Start decrease rate and total feedbacks to tutor-query database"
+      );
+      await this.tutorQueryService.handleFeedbackDeleted(tutorId, rate);
     } finally {
       // Release the mutex
       release();
