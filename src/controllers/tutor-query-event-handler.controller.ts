@@ -52,8 +52,9 @@ export class TutorQueryEventHandlerController {
 
   @EventPattern(new UserDeletedEventPattern())
   async handleUserDeleted(payload: UserDeletedEventPayload) {
-    const { userId } = payload;
-    await this.tutorQueryService.handleTutorDeleted(userId);
+    const { userId, role } = payload;
+    if (role === UserRole.TUTOR)
+      await this.tutorQueryService.handleTutorDeleted(userId);
   }
 
   @EventPattern(new TutorApprovedEventPattern())
