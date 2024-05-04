@@ -1,4 +1,4 @@
-import { Entity, Unique, ManyToOne, PrimaryColumn } from 'typeorm';
+import { Entity, Unique, ManyToOne, PrimaryColumn, Column } from 'typeorm';
 import { Subject } from './subject.entity';
 import { Level } from './level.entity';
 
@@ -7,6 +7,9 @@ import { Level } from './level.entity';
 export class ClassCategory {
   @PrimaryColumn()
   id: string;
+
+  @Column({ unique: true, nullable: true })
+  slug: string;
 
   @ManyToOne(() => Subject, subject => subject.classCategories, { nullable: false, eager: true, cascade: true })
   subject: Subject;

@@ -94,12 +94,14 @@ export class TutorQueryService {
 
   async handleClassCategoryCreated(
     classCategoryId: string,
+    slug: string,
     level: LevelDto,
     subject: SubjectDto
   ) {
     // Create a new ClassCategory instance
     const newClassCategory = this.classCategoryRepository.create({
       id: classCategoryId,
+      slug,
       level,
       subject,
     });

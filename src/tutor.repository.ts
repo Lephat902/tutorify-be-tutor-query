@@ -1,8 +1,8 @@
-import { Brackets, DataSource, Repository, SelectQueryBuilder } from 'typeorm';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Tutor } from './entities';
-import { TutorQueryDto } from './dtos';
 import { Gender, SortingDirection, StoredLocation, TutorOrderBy } from '@tutorify/shared';
+import { Brackets, DataSource, Repository, SelectQueryBuilder } from 'typeorm';
+import { TutorQueryDto } from './dtos';
+import { Tutor } from './entities';
 
 @Injectable()
 export class TutorRepository extends Repository<Tutor> {
@@ -43,8 +43,11 @@ export class TutorRepository extends Repository<Tutor> {
         if (locationToOrder)
             this.orderByLocationPriority(tutorQuery, locationToOrder);
         // classCategoryIds takes precedence over userPreferences.classCategoryIds
-        if (filters?.classCategoryIds) {
-            this.filterByCategoryIds(tutorQuery, filters.classCategoryIds);
+        if (filters.classCategoryIds?.length || filters.classCategorySlugs?.length) {
+            const isFilteringByIds = !!filters.classCategoryIds?.length;
+            const valueToFilter = isFilteringByIds ? filters.classCategoryIds : filters.classCategorySlugs;
+            const fieldToFilter = isFilteringByIds ? 'id' : 'slug';
+            this.filterByCategories(tutorQuery, valueToFilter, fieldToFilter);
         } else if (filters?.userPreferences?.classCategoryIds) {
             this.orderByCategoryPriority(tutorQuery, filters.userPreferences.classCategoryIds)
         }
@@ -73,10 +76,10 @@ export class TutorRepository extends Repository<Tutor> {
     }
 
     // Get only classes that satisfy classCategoryIds
-    private filterByCategoryIds(query: SelectQueryBuilder<Tutor>, classCategoryIds: string[] | undefined) {
-        if (classCategoryIds?.length) {
+    private filterByCategories(query: SelectQueryBuilder<Tutor>, values: string[] | undefined, filterBy: 'id' | 'slug') {
+        if (values?.length) {
             query
-                .andWhere('proficiencies.id IN (:...classCategoryIds)', { classCategoryIds });
+                .andWhere(`proficiencies.${filterBy} IN (:...values)`, { values });
         }
     }
 
