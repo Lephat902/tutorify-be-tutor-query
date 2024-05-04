@@ -157,12 +157,18 @@ export class TutorQueryService {
 
   private async setLocation(filters: TutorQueryDto) {
     let res: GeocodeResponseDto;
-    if (filters?.wardId) {
+    if (filters.wardId) {
       res = await this.addressProxy.getGeocodeFromWardId(filters.wardId);
-    } else if (filters?.districtId) {
+    } else if (filters.wardSlug) {
+      res = await this.addressProxy.getGeocodeFromWardSlug(filters.wardSlug);
+    } else if (filters.districtId) {
       res = await this.addressProxy.getGeocodeFromDistrictId(filters.districtId);
-    } else if (filters?.provinceId) {
+    } else if (filters.districtSlug) {
+      res = await this.addressProxy.getGeocodeFromDistrictSlug(filters.districtSlug);
+    } else if (filters.provinceId) {
       res = await this.addressProxy.getGeocodeFromProvinceId(filters.provinceId);
+    } else if (filters.provinceSlug) {
+      res = await this.addressProxy.getGeocodeFromProvinceSlug(filters.provinceSlug);
     }
 
     if (res) {

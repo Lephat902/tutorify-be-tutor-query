@@ -27,6 +27,9 @@ export class TutorQueryDto extends IntersectionType(
     readonly wardId: string;
     readonly districtId: string;
     readonly provinceId: string;
+    readonly wardSlug: string;
+    readonly districtSlug: string;
+    readonly provinceSlug: string;
     // Not user's input
     location: StoredLocation;
 }

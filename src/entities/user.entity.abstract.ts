@@ -1,7 +1,6 @@
-import { Column, PrimaryColumn } from "typeorm";
-import { Geometry } from 'geojson';
 import { Gender } from "@tutorify/shared";
-import { Exclude } from "class-transformer";
+import { Geometry } from 'geojson';
+import { Column, PrimaryColumn } from "typeorm";
 import { FileObject } from "./file-object.entity";
 
 export abstract class User {
@@ -42,6 +41,5 @@ export abstract class User {
     wardId: string;
 
     @Column({ type: 'geometry', spatialFeatureType: 'Point', nullable: true })
-    @Exclude()
     location: Geometry;
 }
