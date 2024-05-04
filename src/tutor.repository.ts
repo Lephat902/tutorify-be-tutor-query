@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Gender, SortingDirection, StoredLocation, TutorOrderBy } from '@tutorify/shared';
 import { Brackets, DataSource, Repository, SelectQueryBuilder } from 'typeorm';
 import { TutorQueryDto } from './dtos';
-import { Tutor } from './entities';
+import { ClassCategory, Tutor } from './entities';
 
 @Injectable()
 export class TutorRepository extends Repository<Tutor> {
@@ -65,6 +65,7 @@ export class TutorRepository extends Repository<Tutor> {
         this.filterByMaxWage(tutorQuery, filters.maxWage);
 
         const [results, totalCount] = await tutorQuery.getManyAndCount();
+
         return { results, totalCount };
     }
 
@@ -87,15 +88,15 @@ export class TutorRepository extends Repository<Tutor> {
     private orderByCategoryPriority(query: SelectQueryBuilder<Tutor>, classCategoryIds: string[] | undefined) {
         // Assuming classCategoryIds is not empty and is relevant to the query
         if (classCategoryIds?.length) {
-            // Apply order by using a CASE statement to prioritize matching category IDs
-            query
-                .addSelect(`(
-                    CASE
-                        WHEN proficiencies.id IN (:...classCategoryIds) THEN 0
-                        ELSE 1
-                    END)`, "priority")
-                .setParameter("classCategoryIds", classCategoryIds)
-                .addOrderBy("priority", "ASC", "NULLS LAST");
+            query.addSelect(subQuery => {
+                return subQuery
+                    .select("COUNT(classCategory.id)", "count")
+                    .from(ClassCategory, "classCategory")
+                    .leftJoin("classCategory.tutors", "tutor1")
+                    .andWhere("classCategory.id IN (:...classCategoryIds)", { classCategoryIds })
+                    .andWhere("tutor1.id = tutor.id")
+            }, `category_count`)
+                .addOrderBy(`category_count`, "DESC");
         }
     }
 

@@ -1,6 +1,7 @@
-import { Entity, Unique, ManyToOne, PrimaryColumn, Column } from 'typeorm';
+import { Entity, Unique, ManyToOne, PrimaryColumn, Column, ManyToMany } from 'typeorm';
 import { Subject } from './subject.entity';
 import { Level } from './level.entity';
+import { Tutor } from './tutor.entity';
 
 @Entity()
 @Unique(['subject', 'level'])
@@ -16,4 +17,7 @@ export class ClassCategory {
 
   @ManyToOne(() => Level, level => level.classCategories, { nullable: false, eager: true, cascade: true })
   level: Level;
+
+  @ManyToMany(() => Tutor, tutor => tutor.proficiencies)
+  tutors: Tutor[];
 }

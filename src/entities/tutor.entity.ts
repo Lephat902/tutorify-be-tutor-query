@@ -7,7 +7,7 @@ import { Type } from "class-transformer";
 
 @Entity()
 export class Tutor extends User {
-  @ManyToMany(() => ClassCategory)
+  @ManyToMany(() => ClassCategory, category => category.tutors)
   @JoinTable({ name: "tutor_proficient_in_class_category" })
   proficiencies: ClassCategory[];
 
