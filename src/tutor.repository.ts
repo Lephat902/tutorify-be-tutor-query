@@ -38,10 +38,6 @@ export class TutorRepository extends Repository<Tutor> {
         console.log(filters);
 
         // Apply filters to query 
-        // Location has higher priority than class category
-        const locationToOrder = filters.location || filters?.userPreferences?.location;
-        if (locationToOrder)
-            this.orderByLocationPriority(tutorQuery, locationToOrder);
         // classCategoryIds takes precedence over userPreferences.classCategoryIds
         if (filters.classCategoryIds?.length || filters.classCategorySlugs?.length) {
             const isFilteringByIds = !!filters.classCategoryIds?.length;
@@ -51,6 +47,10 @@ export class TutorRepository extends Repository<Tutor> {
         } else if (filters?.userPreferences?.classCategoryIds) {
             this.orderByCategoryPriority(tutorQuery, filters.userPreferences.classCategoryIds)
         }
+        // Location has lower priority than class category
+        const locationToOrder = filters.location || filters?.userPreferences?.location;
+        if (locationToOrder)
+            this.orderByLocationPriority(tutorQuery, locationToOrder);
         this.filterBySubjectIds(tutorQuery, filters?.subjectIds);
         this.filterByLevelIds(tutorQuery, filters?.levelIds);
         this.filterBySearchQuery(tutorQuery, filters.q);
