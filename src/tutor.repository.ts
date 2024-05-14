@@ -36,21 +36,30 @@ export class TutorRepository extends Repository<Tutor> {
     }> {
         const tutorQuery = this.createQueryBuilderWithEagerLoading();
         console.log(filters);
+        let locationInFilter = false, categoriesInFilter = false;
 
         // Apply filters to query 
-        // classCategoryIds takes precedence over userPreferences.classCategoryIds
         if (filters.classCategoryIds?.length || filters.classCategorySlugs?.length) {
             const isFilteringByIds = !!filters.classCategoryIds?.length;
             const valueToFilter = isFilteringByIds ? filters.classCategoryIds : filters.classCategorySlugs;
             const fieldToFilter = isFilteringByIds ? 'id' : 'slug';
             this.filterByCategories(tutorQuery, valueToFilter, fieldToFilter);
-        } else if (filters?.userPreferences?.classCategoryIds) {
-            this.orderByCategoryPriority(tutorQuery, filters.userPreferences.classCategoryIds)
+
+            categoriesInFilter = true;
         }
-        // Location has lower priority than class category
-        const locationToOrder = filters.location || filters?.userPreferences?.location;
-        if (locationToOrder)
-            this.orderByLocationPriority(tutorQuery, locationToOrder);
+
+        if (filters.location) {
+            this.orderByLocationPriority(tutorQuery, filters.location);
+            locationInFilter = true;
+        }
+
+        // User preferences is applied if filter is not provided
+        if (!categoriesInFilter && filters?.userPreferences?.classCategoryIds)
+            this.orderByCategoryPriority(tutorQuery, filters.userPreferences.classCategoryIds);
+
+        if (!locationInFilter && filters?.userPreferences?.location)
+            this.orderByLocationPriority(tutorQuery, filters.userPreferences.location);
+
         this.filterBySubjectIds(tutorQuery, filters?.subjectIds);
         this.filterByLevelIds(tutorQuery, filters?.levelIds);
         this.filterBySearchQuery(tutorQuery, filters.q);
