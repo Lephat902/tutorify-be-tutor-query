@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { ClassCategory, Tutor } from "./entities";
+import { ClassCategory, Tutor } from "../entities";
 import { Repository } from "typeorm";
 import {
   AddressProxy,
@@ -10,8 +10,8 @@ import {
   SubjectDto,
   UserPreferencesProxy
 } from "@tutorify/shared";
-import { TutorQueryDto } from "./dtos";
-import { TutorRepository } from "./tutor.repository";
+import { TutorQueryDto } from "../dtos";
+import { TutorRepository } from "../repositories/tutor.repository";
 
 @Injectable()
 export class TutorQueryService {

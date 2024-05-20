@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Gender, SortingDirection, StoredLocation, TutorOrderBy } from '@tutorify/shared';
 import { Brackets, DataSource, Repository, SelectQueryBuilder } from 'typeorm';
-import { TutorQueryDto } from './dtos';
-import { ClassCategory, Tutor } from './entities';
+import { TutorQueryDto } from '../dtos';
+import { ClassCategory, Tutor } from '../entities';
 
 @Injectable()
 export class TutorRepository extends Repository<Tutor> {

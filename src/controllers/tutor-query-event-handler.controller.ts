@@ -30,7 +30,7 @@ import {
   FeedbackDeletedEventPattern,
   FeedbackDeletedEventPayload,
 } from "@tutorify/shared";
-import { TutorQueryService } from "../tutor-query.service";
+import { TutorQueryService } from "../services/tutor-query.service";
 import { MutexService } from "src/mutexes";
 
 @Controller()

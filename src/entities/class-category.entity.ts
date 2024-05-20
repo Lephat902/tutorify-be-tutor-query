@@ -20,4 +20,6 @@ export class ClassCategory {
 
   @ManyToMany(() => Tutor, tutor => tutor.proficiencies)
   tutors: Tutor[];
+
+  tutorCount: number;
 }

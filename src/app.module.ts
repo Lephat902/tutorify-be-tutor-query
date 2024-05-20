@@ -1,12 +1,12 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { TutorQueryService } from './tutor-query.service';
-import { TutorQueryController, TutorQueryEventHandlerController } from './controllers';
-import { TutorRepository } from './tutor.repository';
-import { entities } from './entities';
 import { ProxiesModule } from '@tutorify/shared';
+import { Controllers } from './controllers';
+import { entities } from './entities';
 import { MutexService } from './mutexes';
+import { ClassCategoryRepository, TutorRepository } from './repositories';
+import { ClassCategoryService, TutorQueryService } from './services';
 
 @Global()
 @Module({
@@ -30,11 +30,10 @@ import { MutexService } from './mutexes';
   providers: [
     TutorQueryService,
     TutorRepository,
+    ClassCategoryService,
+    ClassCategoryRepository,
     MutexService,
   ],
-  controllers: [
-    TutorQueryController,
-    TutorQueryEventHandlerController,
-  ],
+  controllers: Controllers,
 })
 export class AppModule { }

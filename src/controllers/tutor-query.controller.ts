@@ -1,6 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
-import { TutorQueryService } from '../tutor-query.service';
+import { TutorQueryService } from '../services/tutor-query.service';
 import { TutorQueryDto } from '../dtos';
 
 @Controller()
