@@ -42,6 +42,8 @@ export class ClassCategoryService {
         if (filters.includeTutorCount) {
             query
                 .leftJoin('classCategory.tutors', 'tutor')
+                .andWhere('tutor.isApproved = true')
+                .andWhere('tutor.emailVerified = true')
                 .addSelect('COUNT(tutor.id)', 'tutorCount')
                 .addOrderBy('COUNT(tutor.id)', 'DESC');
 
