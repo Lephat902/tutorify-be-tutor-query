@@ -141,14 +141,37 @@ export class TutorRepository extends Repository<Tutor> {
 
     private filterBySearchQuery(query: SelectQueryBuilder<Tutor>, q: string | undefined) {
         if (q) {
-            query.andWhere(
-                new Brackets((qb) => {
-                    qb.where('tutor.biography ILIKE :q', { q: `%${q}%` })
-                        .orWhere('tutor.firstName ILIKE :q', { q: `%${q}%` })
-                        .orWhere('tutor.lastName ILIKE :q', { q: `%${q}%` })
-                        .orWhere('tutor.username ILIKE :q', { q: `%${q}%` });
-                }),
-            );
+            const queryStrToCalSmlName = `similarity(\
+                LOWER(CONCAT(tutor."firstName", ' ', tutor."middleName", ' ', tutor."lastName")),\
+                LOWER(:q)\
+            )`;
+            const tsQueryTerm = q
+                .split(' ')
+                .map(word => word + ':*')
+                .join('|');
+
+            query
+                .addSelect(
+                    `${queryStrToCalSmlName}`,
+                    'rank1'
+                )
+                .addSelect(
+                    'ts_rank_cd(to_tsvector(biography), to_tsquery(:language, :biographyQ))',
+                    'rank2'
+                )
+                .andWhere(new Brackets(qb => {
+                    qb
+                        .orWhere(`(${queryStrToCalSmlName} >= :threshold)`,
+                            { q, threshold: 0.1 })
+                        .orWhere(
+                            'to_tsquery(:language, :biographyQ) @@ to_tsvector(tutor.biography)',
+                            { language: 'simple', biographyQ: tsQueryTerm },
+                        )
+                        .orWhere('tutor.username ILIKE :searchTerm', { searchTerm: `%${q}%` })
+                        .orWhere('tutor.email ILIKE :searchTerm', { searchTerm: `%${q}%` });
+                }))
+                .addOrderBy('rank1', "DESC")
+                .addOrderBy('rank2', "DESC");
         }
     }
 

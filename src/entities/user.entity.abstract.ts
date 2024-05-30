@@ -1,6 +1,6 @@
 import { Gender } from "@tutorify/shared";
 import { Geometry } from 'geojson';
-import { Column, PrimaryColumn } from "typeorm";
+import { Column, Index, PrimaryColumn } from "typeorm";
 import { FileObject } from "./file-object.entity";
 
 export abstract class User {
@@ -11,15 +11,19 @@ export abstract class User {
     email: string;
 
     @Column({ unique: true })
+    @Index({ fulltext: true })
     username: string;
 
     @Column({ nullable: true })
+    @Index({ fulltext: true })
     firstName: string;
 
     @Column({ nullable: true })
+    @Index({ fulltext: true })
     middleName: string;
 
     @Column({ nullable: true })
+    @Index({ fulltext: true })
     lastName: string;
 
     @Column({ type: 'enum', enum: Gender, nullable: true })
